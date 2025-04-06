@@ -1,4 +1,5 @@
 # Real-Time Brand Mention & Sentiment Dashboard
+#BC$%GHT
 
 A modern SaaS application for monitoring brand mentions and sentiment across various platforms. Built with Next.js, TypeScript, and Tailwind CSS.
 
