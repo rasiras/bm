@@ -11,20 +11,71 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String          @id @default(cuid())
+  email         String          @unique
+  name          String
+  password      String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  monitoringItems MonitoringItems?
+  brandMentions BrandMention[]
+  competitors   Competitor[]
+  reports       Report[]
+}
+
+model MonitoringItems {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domains     String[]
+  brandNames  String[]
+  keywords    String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model BrandMention {
-  id        String   @id @default(cuid())
-  content   String
-  platform  String
-  author    String
-  sentiment String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     String
+  platform    String
+  author      String
+  sentiment   String
+  url         String?
+  engagement  Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Competitor {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  website     String?
+  keywords    String[]
+  mentions    Json?    // Store competitor mentions data
+  sentiment   Json?    // Store sentiment analysis data
+  marketShare Float?   // Store market share percentage
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  type        String   // e.g., 'sentiment', 'competitor', 'trend'
+  data        Json     // Store report data
+  period      String   // e.g., 'daily', 'weekly', 'monthly'
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 } 

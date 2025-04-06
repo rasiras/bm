@@ -28,7 +28,7 @@ const stats = [
 
 export default function Home() {
   return (
-    <div className="bg-white">
+    <div className="bg-white pt-16">
       {/* Hero Section */}
       <div className="relative isolate px-6 pt-14 lg:px-8">
         <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
@@ -62,14 +62,14 @@ export default function Home() {
       </div>
 
       {/* Features Section */}
-      <div className="mx-auto max-w-7xl px-6 lg:px-8 py-24 sm:py-32">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:text-center">
-          <h2 className="text-base font-semibold leading-7 text-indigo-600">Powerful Features</h2>
+          <h2 className="text-base font-semibold leading-7 text-indigo-600">Monitor Smarter</h2>
           <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Everything you need to monitor your brand
+            Everything you need to monitor your brand online
           </p>
           <p className="mt-6 text-lg leading-8 text-gray-600">
-            Our platform provides comprehensive tools to help you understand and improve your brand's online presence.
+            Get real-time insights into what people are saying about your brand across the internet.
           </p>
         </div>
         <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
@@ -90,27 +90,23 @@ export default function Home() {
       </div>
 
       {/* Stats Section */}
-      <div className="bg-white py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:max-w-none">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                Trusted by brands worldwide
-              </h2>
-              <p className="mt-4 text-lg leading-8 text-gray-600">
-                Join thousands of companies using Brand Monitor to improve their online presence
-              </p>
-            </div>
-            <dl className="mt-16 grid grid-cols-1 gap-0.5 overflow-hidden rounded-2xl text-center sm:grid-cols-2 lg:grid-cols-4">
-              {stats.map((stat) => (
-                <div key={stat.id} className="flex flex-col bg-gray-400/5 p-8">
-                  <dt className="text-sm font-medium leading-6 text-gray-600">{stat.name}</dt>
-                  <dd className="order-first text-3xl font-semibold tracking-tight text-gray-900">{stat.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
+      <div className="mx-auto mt-32 max-w-7xl px-6 sm:mt-40 lg:px-8">
+        <div className="mx-auto max-w-2xl lg:mx-0">
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            Trusted by brands worldwide
+          </h2>
+          <p className="mt-6 text-base leading-7 text-gray-600">
+            Join thousands of companies already using our platform to monitor and improve their online presence.
+          </p>
         </div>
+        <dl className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-10 text-white sm:mt-20 sm:grid-cols-2 sm:gap-y-16 lg:mx-0 lg:max-w-none lg:grid-cols-4">
+          {stats.map((stat) => (
+            <div key={stat.id} className="flex flex-col gap-y-3 border-l border-white/10 pl-6">
+              <dt className="text-sm leading-6">{stat.name}</dt>
+              <dd className="order-first text-3xl font-semibold tracking-tight">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
 
       {/* CTA Section */}

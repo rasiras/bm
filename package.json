@@ -18,9 +18,9 @@
     "@vercel/postgres": "^0.10.0",
     "bcryptjs": "^3.0.2",
     "date-fns": "^4.1.0",
+    "jose": "^6.0.10",
     "jsonwebtoken": "^9.0.2",
     "next": "^15.2.4",
-    "prisma": "^6.5.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2"
@@ -33,6 +33,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
+    "prisma": "^6.5.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

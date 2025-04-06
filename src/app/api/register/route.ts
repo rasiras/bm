@@ -6,15 +6,23 @@ export async function POST(request: Request) {
   try {
     const { email, password, name } = await request.json();
 
+    // Validate input
+    if (!name || !email || !password) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Missing required fields' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email }
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "User already exists" },
-        { status: 400 }
+      return new NextResponse(
+        JSON.stringify({ error: 'User already exists' }),
+        { status: 409, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
@@ -30,15 +38,20 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(
-      { message: "User created successfully" },
-      { status: 201 }
+    // Return success with redirect to dashboard
+    return new NextResponse(
+      JSON.stringify({ 
+        success: true, 
+        message: 'User created successfully',
+        redirectTo: '/dashboard'
+      }),
+      { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error("Registration error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+    console.error('Error in registration:', error);
+    return new NextResponse(
+      JSON.stringify({ error: 'Server error' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 } 

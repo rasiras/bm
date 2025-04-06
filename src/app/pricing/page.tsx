@@ -3,60 +3,90 @@ import { CheckIcon } from '@heroicons/react/24/outline';
 
 const tiers = [
   {
-    name: 'Starter',
-    id: 'starter',
-    price: '$29',
-    description: 'Perfect for small businesses just getting started with brand monitoring.',
+    name: 'Basic',
+    id: 'tier-basic',
+    href: '#',
+    priceMonthly: '$29',
+    description: 'Perfect for small businesses and startups.',
     features: [
-      'Up to 1,000 mentions per month',
+      'Up to 3 domains or brand names',
+      'Real-time monitoring',
       'Basic sentiment analysis',
-      'Twitter and Reddit monitoring',
       'Email notifications',
-      'Basic analytics dashboard',
+      '5,000 mentions per month',
+      'Data retention: 3 months',
     ],
-    cta: 'Start with Starter',
     mostPopular: false,
+    cta: 'Start free trial',
   },
   {
-    name: 'Professional',
-    id: 'professional',
-    price: '$99',
-    description: 'Ideal for growing businesses that need more comprehensive monitoring.',
+    name: 'Pro',
+    id: 'tier-pro',
+    href: '#',
+    priceMonthly: '$79',
+    description: 'Ideal for growing businesses.',
     features: [
-      'Up to 10,000 mentions per month',
+      'Up to 10 domains or brand names',
+      'Real-time monitoring',
       'Advanced sentiment analysis',
-      'All social media platforms',
-      'Real-time notifications',
-      'Advanced analytics dashboard',
-      'Custom alerts and filters',
+      'Instant notifications',
+      '25,000 mentions per month',
+      'Data retention: 12 months',
       'API access',
+      'Custom reports',
     ],
-    cta: 'Start with Professional',
     mostPopular: true,
+    cta: 'Start free trial',
   },
   {
     name: 'Enterprise',
-    id: 'enterprise',
-    price: 'Custom',
-    description: 'For large organizations requiring full-scale brand monitoring solutions.',
+    id: 'tier-enterprise',
+    href: '#',
+    priceMonthly: 'Custom',
+    description: 'For large organizations with advanced needs.',
     features: [
+      'Unlimited domains and brand names',
+      'Real-time monitoring',
+      'Advanced sentiment analysis',
+      'Priority notifications',
       'Unlimited mentions',
-      'AI-powered sentiment analysis',
-      'All data sources',
-      'Priority support',
-      'Custom integrations',
-      'Dedicated account manager',
+      'Unlimited data retention',
+      'API access',
+      'Custom reports',
+      'Dedicated support',
       'SLA guarantees',
-      'Custom reporting',
     ],
-    cta: 'Contact sales',
     mostPopular: false,
+    cta: 'Contact sales',
+  },
+];
+
+const faqs = [
+  {
+    question: 'Do you offer a free trial?',
+    answer: 'Yes! We offer a 14-day free trial on all our plans. No credit card required.',
+  },
+  {
+    question: 'Can I switch plans later?',
+    answer: 'Absolutely! You can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.',
+  },
+  {
+    question: 'Do you offer custom plans?',
+    answer: 'Yes, our Enterprise plan can be customized to your specific needs. Contact our sales team to discuss your requirements.',
+  },
+  {
+    question: 'What payment methods do you accept?',
+    answer: 'We accept all major credit cards and can also arrange other payment methods for Enterprise customers.',
+  },
+  {
+    question: 'What happens after my free trial?',
+    answer: 'After your trial ends, you can choose to subscribe to any of our plans. We\'ll notify you before the trial ends.',
   },
 ];
 
 export default function PricingPage() {
   return (
-    <main className="bg-white">
+    <main className="bg-white pt-16">
       {/* Header */}
       <div className="relative isolate overflow-hidden">
         <div className="mx-auto max-w-7xl px-6 pb-32 pt-36 sm:pt-60 lg:px-8 lg:pt-32">
@@ -76,62 +106,31 @@ export default function PricingPage() {
 
       {/* Pricing section */}
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="isolate mx-auto mt-10 grid max-w-md grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+        <div className="mx-auto grid max-w-md grid-cols-1 gap-8 lg:max-w-4xl lg:grid-cols-2 xl:max-w-none xl:grid-cols-3">
           {tiers.map((tier) => (
             <div
               key={tier.id}
-              className={`rounded-3xl p-8 ring-1 ring-gray-200 ${
-                tier.mostPopular
-                  ? 'bg-gray-900 ring-gray-900'
-                  : 'bg-white'
+              className={`rounded-3xl p-8 ring-1 ring-gray-200 xl:p-10 ${
+                tier.mostPopular ? 'bg-gray-900 text-white ring-gray-900' : 'bg-white'
               }`}
             >
               <h3
+                id={tier.id}
                 className={`text-lg font-semibold leading-8 ${
                   tier.mostPopular ? 'text-white' : 'text-gray-900'
                 }`}
               >
                 {tier.name}
               </h3>
-              <p
-                className={`mt-4 text-sm leading-6 ${
-                  tier.mostPopular ? 'text-gray-300' : 'text-gray-600'
-                }`}
-              >
-                {tier.description}
-              </p>
+              <p className="mt-4 text-sm leading-6 text-gray-600">{tier.description}</p>
               <p className="mt-6 flex items-baseline gap-x-1">
-                <span
-                  className={`text-4xl font-bold tracking-tight ${
-                    tier.mostPopular ? 'text-white' : 'text-gray-900'
-                  }`}
-                >
-                  {tier.price}
-                </span>
-                {tier.price !== 'Custom' && (
-                  <span
-                    className={`text-sm font-semibold leading-6 ${
-                      tier.mostPopular ? 'text-gray-300' : 'text-gray-600'
-                    }`}
-                  >
-                    /month
-                  </span>
-                )}
+                <span className="text-4xl font-bold tracking-tight text-gray-900">{tier.priceMonthly}</span>
+                <span className="text-sm font-semibold leading-6 text-gray-600">/month</span>
               </p>
-              <ul
-                role="list"
-                className={`mt-8 space-y-3 text-sm leading-6 ${
-                  tier.mostPopular ? 'text-gray-300' : 'text-gray-600'
-                }`}
-              >
+              <ul role="list" className="mt-8 space-y-3 text-sm leading-6 text-gray-600">
                 {tier.features.map((feature) => (
                   <li key={feature} className="flex gap-x-3">
-                    <CheckIcon
-                      className={`h-6 w-5 flex-none ${
-                        tier.mostPopular ? 'text-white' : 'text-indigo-600'
-                      }`}
-                      aria-hidden="true"
-                    />
+                    <CheckIcon className="h-6 w-5 flex-none text-indigo-600" aria-hidden="true" />
                     {feature}
                   </li>
                 ))}
@@ -152,38 +151,22 @@ export default function PricingPage() {
       </div>
 
       {/* FAQ section */}
-      <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 lg:py-40">
-        <div className="mx-auto max-w-4xl divide-y divide-gray-900/10">
-          <h2 className="text-2xl font-bold leading-10 tracking-tight text-gray-900">
-            Frequently asked questions
-          </h2>
-          <dl className="mt-10 space-y-6 divide-y divide-gray-900/10">
-            <div className="pt-6">
-              <dt className="text-lg font-semibold leading-7 text-gray-900">
-                What's included in the free trial?
+      <div className="mx-auto max-w-2xl divide-y divide-gray-900/10 px-6 pb-24 sm:pb-32 lg:max-w-7xl lg:px-8 lg:pb-40">
+        <h2 className="text-2xl font-bold leading-10 tracking-tight text-gray-900">
+          Frequently asked questions
+        </h2>
+        <dl className="mt-10 space-y-8 divide-y divide-gray-900/10">
+          {faqs.map((faq) => (
+            <div key={faq.question} className="pt-8 lg:grid lg:grid-cols-12 lg:gap-8">
+              <dt className="text-base font-semibold leading-7 text-gray-900 lg:col-span-5">
+                {faq.question}
               </dt>
-              <dd className="mt-2 text-base leading-7 text-gray-600">
-                All features of the Professional plan are available during your 14-day free trial. No credit card required.
+              <dd className="mt-4 lg:col-span-7 lg:mt-0">
+                <p className="text-base leading-7 text-gray-600">{faq.answer}</p>
               </dd>
             </div>
-            <div className="pt-6">
-              <dt className="text-lg font-semibold leading-7 text-gray-900">
-                Can I switch plans later?
-              </dt>
-              <dd className="mt-2 text-base leading-7 text-gray-600">
-                Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.
-              </dd>
-            </div>
-            <div className="pt-6">
-              <dt className="text-lg font-semibold leading-7 text-gray-900">
-                Do you offer custom plans?
-              </dt>
-              <dd className="mt-2 text-base leading-7 text-gray-600">
-                Yes, our Enterprise plan can be customized to your specific needs. Contact our sales team to learn more.
-              </dd>
-            </div>
-          </dl>
-        </div>
+          ))}
+        </dl>
       </div>
     </main>
   );

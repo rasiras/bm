@@ -1,27 +1,40 @@
 export type Sentiment = 'positive' | 'neutral' | 'negative';
 
-export type Platform = 'twitter' | 'reddit' | 'news';
+export type Platform = 'twitter' | 'reddit' | 'news' | 'facebook';
+
+export interface Engagement {
+  likes?: number;
+  retweets?: number;
+  replies?: number;
+  shares?: number;
+  comments?: number;
+}
+
+export type Competitor = {
+  id: string;
+  name: string;
+  brand: string;
+  logo?: string;
+  createdAt: string;
+  updatedAt: string;
+};
 
 export interface BrandMention {
   id: string;
-  platform: Platform;
   content: string;
-  sentiment: Sentiment;
-  timestamp: string;
-  url: string;
+  platform: Platform;
   author: string;
-  engagement: {
-    likes?: number;
-    shares?: number;
-    comments?: number;
-  };
+  sentiment: Sentiment;
+  url?: string;
+  engagement?: Engagement;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface Insight {
+export type Insight = {
   id: string;
-  type: 'positive' | 'negative' | 'trend';
   title: string;
   description: string;
-  mentions: BrandMention[];
-  priority: 'high' | 'medium' | 'low';
-} 
+  type: 'positive' | 'negative' | 'trend';
+  mentions: string[];
+}; 
