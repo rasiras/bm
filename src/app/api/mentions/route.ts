@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
     // Verify the token
     const decoded = await verify(token);
-    
+
     if (!decoded || !decoded.email) {
       console.log('Invalid token or no email in token');
       return new NextResponse(
@@ -57,7 +57,7 @@ export async function GET(request: Request) {
 
     // If no mentions found, return empty array instead of error
     return new NextResponse(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         data: mentions || []
       }),
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
 
     // Verify the token
     const decoded = await verify(token);
-    
+
     if (!decoded || !decoded.email) {
       return new NextResponse(
         JSON.stringify({ error: 'Invalid token' }),
@@ -132,7 +132,7 @@ export async function POST(request: Request) {
     });
 
     return new NextResponse(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         data: mention
       }),
@@ -145,4 +145,75 @@ export async function POST(request: Request) {
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
-} 
+}
+
+export async function DELETE(request: Request) {
+  try {
+    // Get the token from cookies
+    const token = await getToken();
+
+    if (!token) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Not authenticated' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verify the token
+    const decoded = await verify(token);
+
+    if (!decoded || !decoded.email) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Invalid token' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get the user
+    const user = await prisma.user.findUnique({
+      where: { email: decoded.email as string }
+    });
+
+    if (!user) {
+      return new NextResponse(
+        JSON.stringify({ error: 'User not found' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Parse the request body
+    const body = await request.json();
+    const { ids } = body;
+
+    // Validate required fields
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Missing or invalid mention IDs' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Delete the brand mentions
+    const result = await prisma.brandMention.deleteMany({
+      where: {
+        id: { in: ids },
+        userId: user.id // Ensure user can only delete their own mentions
+      }
+    });
+
+    return new NextResponse(
+      JSON.stringify({
+        success: true,
+        message: `Successfully deleted ${result.count} mentions`,
+        count: result.count
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error deleting mentions:', error);
+    return new NextResponse(
+      JSON.stringify({ error: 'Server error' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+}

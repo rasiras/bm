@@ -87,6 +87,8 @@ export default function BrandMentionsPage() {
   const [selectedSentiment, setSelectedSentiment] = useState<Sentiment | 'all'>('all');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedMentions, setSelectedMentions] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchMentions();
@@ -96,11 +98,11 @@ export default function BrandMentionsPage() {
     try {
       setLoading(true);
       const response = await fetch('/api/mentions');
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch mentions');
       }
-      
+
       const data = await response.json();
       setMentions(data.data || []);
     } catch (error) {
@@ -118,78 +120,114 @@ export default function BrandMentionsPage() {
     try {
       setIsSearching(true);
       setError(null);
-      
-      let twitterData = { data: [] };
-      let redditData = { data: [] };
-      let facebookData = { data: [] };
-      
-      // Search Twitter
-      const twitterResponse = await fetch(`/api/twitter/search?keyword=${encodeURIComponent(searchKeyword.trim())}`);
-      
-      if (!twitterResponse.ok) {
-        console.error('Failed to search Twitter');
-      } else {
-        twitterData = await twitterResponse.json();
-        console.log(`Found ${twitterData.data.length} tweets for "${searchKeyword.trim()}"`);
-        
-        // Update mentions with Twitter results
-        setMentions(prevMentions => {
-          const existingIds = new Set(prevMentions.map(m => m.id));
-          const newMentions = twitterData.data.filter((m: BrandMention) => !existingIds.has(m.id));
-          return [...newMentions, ...prevMentions];
-        });
-      }
-      
-      // Search Reddit
-      const redditResponse = await fetch(`/api/reddit/search?keyword=${encodeURIComponent(searchKeyword.trim())}`);
-      
-      if (!redditResponse.ok) {
-        console.error('Failed to search Reddit');
-      } else {
-        redditData = await redditResponse.json();
-        console.log(`Found ${redditData.data.length} Reddit posts for "${searchKeyword.trim()}"`);
-        
-        // Update mentions with Reddit results
-        setMentions(prevMentions => {
-          const existingIds = new Set(prevMentions.map(m => m.id));
-          const newMentions = redditData.data.filter((m: BrandMention) => !existingIds.has(m.id));
-          return [...newMentions, ...prevMentions];
-        });
+      setSuccessMessage('Searching across platforms using Google dork...');
+
+      // Use the unified search API to search across all platforms
+      const searchResponse = await fetch(`/api/search?keyword=${encodeURIComponent(searchKeyword.trim())}`);
+
+      if (!searchResponse.ok) {
+        throw new Error('Failed to search for mentions');
       }
 
-      // Search Facebook
-      const facebookResponse = await fetch(`/api/facebook/search?keyword=${encodeURIComponent(searchKeyword.trim())}`);
-      
-      if (!facebookResponse.ok) {
-        console.error('Failed to search Facebook');
-      } else {
-        facebookData = await facebookResponse.json();
-        console.log(`Found ${facebookData.data.length} Facebook posts for "${searchKeyword.trim()}"`);
-        
-        // Update mentions with Facebook results
-        setMentions(prevMentions => {
-          const existingIds = new Set(prevMentions.map(m => m.id));
-          const newMentions = facebookData.data.filter((m: BrandMention) => !existingIds.has(m.id));
-          return [...newMentions, ...prevMentions];
-        });
-      }
-      
-      // Calculate total new mentions
-      const twitterCount = twitterResponse.ok ? twitterData.data.length : 0;
-      const redditCount = redditResponse.ok ? redditData.data.length : 0;
-      const facebookCount = facebookResponse.ok ? facebookData.data.length : 0;
-      const totalNewMentions = twitterCount + redditCount + facebookCount;
-      
-      if (totalNewMentions > 0) {
-        setSuccessMessage(`Found ${totalNewMentions} new mentions across Twitter, Reddit, and Facebook`);
+      const searchData = await searchResponse.json();
+      const mentionsFound = searchData.data || [];
+      const stats = searchData.stats || { total: 0, byPlatform: {} };
+
+      console.log(`Found ${stats.total} mentions for "${searchKeyword.trim()}":`, stats);
+
+      // Update mentions with search results
+      setMentions(prevMentions => {
+        const existingIds = new Set(prevMentions.map(m => m.id));
+        const newMentions = mentionsFound.filter((m: BrandMention) => !existingIds.has(m.id));
+        return [...newMentions, ...prevMentions];
+      });
+
+      // Format platform-specific results for the success message
+      const platformResults = Object.entries(stats.byPlatform || {})
+        .map(([platform, count]) => `${count} on ${platform === 'twitter' ? 'X/Twitter' : platform}`)
+        .join(', ');
+
+      if (stats.total > 0) {
+        setSuccessMessage(`Found ${stats.total} new mentions (${platformResults})`);
       } else {
         setError('No new mentions found');
       }
     } catch (error) {
-      console.error('Error searching social media:', error);
-      setError(error instanceof Error ? error.message : 'Failed to search social media');
+      console.error('Error searching for mentions:', error);
+      setError(error instanceof Error ? error.message : 'Failed to search for mentions');
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  // Handle selecting/deselecting a mention
+  const toggleMentionSelection = (id: string) => {
+    setSelectedMentions(prev => {
+      const newSelection = new Set(prev);
+      if (newSelection.has(id)) {
+        newSelection.delete(id);
+      } else {
+        newSelection.add(id);
+      }
+      return newSelection;
+    });
+  };
+
+  // Handle selecting all mentions
+  const selectAllMentions = () => {
+    const mentionIds = filteredMentions.map(mention => mention.id);
+    setSelectedMentions(new Set(mentionIds));
+  };
+
+  // Handle clearing all selections
+  const clearSelections = () => {
+    setSelectedMentions(new Set());
+  };
+
+  // Handle deleting selected mentions
+  const deleteSelectedMentions = async () => {
+    if (selectedMentions.size === 0) return;
+
+    try {
+      setIsDeleting(true);
+      setError(null);
+
+      const response = await fetch('/api/mentions', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ids: Array.from(selectedMentions)
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete mentions');
+      }
+
+      const data = await response.json();
+
+      // Remove deleted mentions from state
+      setMentions(prevMentions =>
+        prevMentions.filter(mention => !selectedMentions.has(mention.id))
+      );
+
+      // Clear selection
+      setSelectedMentions(new Set());
+
+      // Show success message
+      setSuccessMessage(`Successfully deleted ${data.count} mentions`);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+    } catch (error) {
+      console.error('Error deleting mentions:', error);
+      setError(error instanceof Error ? error.message : 'Failed to delete mentions');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -216,7 +254,7 @@ export default function BrandMentionsPage() {
       <div className="py-6">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
           <h1 className="text-2xl font-semibold text-gray-900">Brand Mentions</h1>
-          
+
           {/* Success Message */}
           {successMessage && (
             <div className="mt-4 rounded-md bg-green-50 p-4">
@@ -242,7 +280,7 @@ export default function BrandMentionsPage() {
               </div>
             </div>
           )}
-          
+
           {/* Error Message */}
           {error && (
             <div className="mt-4 rounded-md bg-red-50 p-4">
@@ -268,7 +306,7 @@ export default function BrandMentionsPage() {
               </div>
             </div>
           )}
-          
+
           {/* Enhanced Search Panel */}
           <div className="mt-6 bg-white shadow rounded-lg overflow-hidden">
             <div className="px-6 py-5 border-b border-gray-200">
@@ -277,7 +315,7 @@ export default function BrandMentionsPage() {
                 Find mentions of your brand, products, or keywords across multiple platforms
               </p>
             </div>
-            
+
             <div className="px-6 py-5">
               <form onSubmit={handleSearch} className="space-y-4">
                 <div className="flex flex-col space-y-4">
@@ -300,10 +338,10 @@ export default function BrandMentionsPage() {
                       />
                     </div>
                     <p className="mt-2 text-sm text-gray-500">
-                      This will search Twitter, Reddit, and Facebook for mentions of your keyword
+                      This will use Google dork to perform a <span className="font-semibold">case-sensitive</span> search across Twitter (X), Reddit, Facebook, and news sites
                     </p>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <div className="flex items-center">
                       <input
@@ -343,7 +381,7 @@ export default function BrandMentionsPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="pt-4">
                   <button
                     type="submit"
@@ -368,18 +406,18 @@ export default function BrandMentionsPage() {
                 </div>
               </form>
             </div>
-            
+
             <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
               <div className="flex items-center text-sm text-gray-500">
                 <svg className="h-5 w-5 text-gray-400 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
-                <span>Results will be displayed below and saved to your mentions list</span>
+                <span>Uses Google dork to search across Twitter (X), Reddit, Facebook, and news sites</span>
               </div>
             </div>
           </div>
-          
-          {/* Filters */}
+
+          {/* Filters and Actions */}
           <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col sm:flex-row sm:space-x-4">
               <div className="mb-4 sm:mb-0">
@@ -418,7 +456,44 @@ export default function BrandMentionsPage() {
                 </select>
               </div>
             </div>
-            <div className="mt-4 sm:mt-0">
+            <div className="mt-4 sm:mt-0 flex items-center space-x-2">
+              <span className="text-sm text-gray-700">
+                {selectedMentions.size} selected
+              </span>
+              <button
+                type="button"
+                onClick={selectAllMentions}
+                disabled={filteredMentions.length === 0}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Select All
+              </button>
+              <button
+                type="button"
+                onClick={clearSelections}
+                disabled={selectedMentions.size === 0}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Clear Selection
+              </button>
+              <button
+                type="button"
+                onClick={deleteSelectedMentions}
+                disabled={selectedMentions.size === 0 || isDeleting}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Selected'
+                )}
+              </button>
               <button
                 onClick={fetchMentions}
                 className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -427,17 +502,28 @@ export default function BrandMentionsPage() {
               </button>
             </div>
           </div>
-          
+
           {/* Mentions List */}
           <div className="mt-6">
             {filteredMentions.length > 0 ? (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredMentions.map((mention) => (
-                  <div key={mention.id} className="bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300">
+                  <div key={mention.id} className={`bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300 ${selectedMentions.has(mention.id) ? 'ring-2 ring-indigo-500' : ''}`}>
                     <div className="p-6">
                       <div className="flex items-start">
                         <div className="flex-shrink-0 mr-4">
-                          <SocialMediaIcon platform={mention.platform} />
+                          <div className="relative flex items-center">
+                            <div className="absolute top-0 left-0 transform -translate-x-3 -translate-y-1">
+                              <input
+                                type="checkbox"
+                                id={`mention-${mention.id}`}
+                                checked={selectedMentions.has(mention.id)}
+                                onChange={() => toggleMentionSelection(mention.id)}
+                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded z-10"
+                              />
+                            </div>
+                            <SocialMediaIcon platform={mention.platform} />
+                          </div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
@@ -537,4 +623,4 @@ export default function BrandMentionsPage() {
       </div>
     </div>
   );
-} 
+}

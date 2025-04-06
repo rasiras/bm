@@ -135,56 +135,49 @@ export default function Dashboard() {
 
       const data = await response.json();
       setMonitoringItems(data.data);
-      
-      // Search Twitter for the keyword
+
+      // Use the unified search API to search across all platforms
       try {
-        const twitterResponse = await fetch(`/api/twitter/search?keyword=${encodeURIComponent(newKeyword.trim())}`);
-        
-        if (!twitterResponse.ok) {
-          console.error('Failed to search Twitter');
-        } else {
-          const twitterData = await twitterResponse.json();
-          console.log(`Found ${twitterData.data.length} tweets for "${newKeyword.trim()}"`);
-          
-          // Update mentions with Twitter results
-          setMentions(prevMentions => {
-            const existingIds = new Set(prevMentions.map(m => m.id));
-            const newMentions = twitterData.data.filter((m: BrandMention) => !existingIds.has(m.id));
-            return [...newMentions, ...prevMentions];
-          });
+        // Show loading message
+        setSuccessMessage(`Searching for mentions of "${newKeyword.trim()}"...`);
+
+        // Call the unified search API
+        const searchResponse = await fetch(`/api/search?keyword=${encodeURIComponent(newKeyword.trim())}`);
+
+        if (!searchResponse.ok) {
+          console.error('Failed to search for mentions');
+          throw new Error('Failed to search for mentions');
         }
-      } catch (twitterError) {
-        console.error('Error searching Twitter:', twitterError);
+
+        const searchData = await searchResponse.json();
+        const mentionsFound = searchData.data || [];
+        const stats = searchData.stats || { total: 0 };
+
+        console.log(`Found ${stats.total} mentions for "${newKeyword.trim()}":`, stats);
+
+        // Update mentions with search results
+        setMentions(prevMentions => {
+          const existingIds = new Set(prevMentions.map(m => m.id));
+          const newMentions = mentionsFound.filter((m: BrandMention) => !existingIds.has(m.id));
+          return [...newMentions, ...prevMentions];
+        });
+
+        // Show success message with stats
+        setSuccessMessage(
+          `Keyword "${newKeyword.trim()}" added successfully! Found ${stats.total} mentions across platforms.`
+        );
+      } catch (searchError) {
+        console.error('Error searching for mentions:', searchError);
+        // Still show success for adding the keyword even if search fails
+        setSuccessMessage(`Keyword "${newKeyword.trim()}" added successfully! (Search failed: ${searchError.message})`);
       }
-      
-      // Search Reddit for the keyword
-      try {
-        const redditResponse = await fetch(`/api/reddit/search?keyword=${encodeURIComponent(newKeyword.trim())}`);
-        
-        if (!redditResponse.ok) {
-          console.error('Failed to search Reddit');
-        } else {
-          const redditData = await redditResponse.json();
-          console.log(`Found ${redditData.data.length} Reddit posts for "${newKeyword.trim()}"`);
-          
-          // Update mentions with Reddit results
-          setMentions(prevMentions => {
-            const existingIds = new Set(prevMentions.map(m => m.id));
-            const newMentions = redditData.data.filter((m: BrandMention) => !existingIds.has(m.id));
-            return [...newMentions, ...prevMentions];
-          });
-        }
-      } catch (redditError) {
-        console.error('Error searching Reddit:', redditError);
-      }
-      
+
       setNewKeyword('');
-      setSuccessMessage(`Keyword "${newKeyword.trim()}" added successfully!`);
-      
-      // Clear success message after 3 seconds
+
+      // Clear success message after 5 seconds
       setTimeout(() => {
         setSuccessMessage(null);
-      }, 3000);
+      }, 5000);
     } catch (error) {
       console.error('Error adding keyword:', error);
       setError(error instanceof Error ? error.message : 'Failed to add keyword');
@@ -214,11 +207,11 @@ export default function Dashboard() {
         }
 
         setUser(userData);
-        
+
         // Fetch monitoring items
         const setupResponse = await fetch('/api/setup');
         const setupData = await setupResponse.json();
-        
+
         if (setupResponse.ok && setupData.data) {
           setMonitoringItems(setupData.data);
         } else {
@@ -352,7 +345,7 @@ export default function Dashboard() {
                     Track mentions of your brand, products, or industry terms across social media
                   </p>
                 </div>
-                
+
                 <div className="px-6 py-5">
                   <form onSubmit={handleAddKeyword} className="space-y-4">
                     <div>
@@ -374,10 +367,10 @@ export default function Dashboard() {
                         />
                       </div>
                       <p className="mt-2 text-sm text-gray-500">
-                        We'll search Twitter, Reddit, and Facebook for mentions of this keyword
+                        We'll use Google dork to perform a <span className="font-semibold">case-sensitive</span> search across Twitter (X), Reddit, Facebook, and news sites
                       </p>
                     </div>
-                    
+
                     {showSuggestions && keywordSuggestions.length > 0 && (
                       <div className="mt-2 rounded-md bg-gray-50 p-3">
                         <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Suggestions</h4>
@@ -395,7 +388,7 @@ export default function Dashboard() {
                         </div>
                       </div>
                     )}
-                    
+
                     <div className="pt-4">
                       <button
                         type="submit"
@@ -420,7 +413,7 @@ export default function Dashboard() {
                     </div>
                   </form>
                 </div>
-                
+
                 <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
                   <div className="flex items-center text-sm text-gray-500">
                     <svg className="h-5 w-5 text-gray-400 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -653,4 +646,4 @@ export default function Dashboard() {
       </div>
     </div>
   );
-} 
+}
